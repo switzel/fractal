@@ -15,6 +15,7 @@ import re
 props = PropManager()
 mode = props.add('mode','disk').set_allowed('disk flop test'.split())
 depth = props.add('depth',3)
+center = props.add('center','vertex')
 resolution = props.add('resolution',20)
 tolerance = props.add('tolerance',1e-2)
 separation = props.add('separation',.8)
@@ -212,11 +213,18 @@ def lattice():
   advance = Mobius.translation((equilateral_length(),0))*Mobius.from_angle(pi)
   rotate = Mobius.from_angle(a*arange(degree()))
   protate = advance*rotate[1]
-  polygon = array([protate**i for i in xrange(1,poly()-1)])[:,None].view(Mobius)
-  link = (rotate[::-1]*polygon*rotate).reshape(-1,2,2)
-  levels = [Mobius.identity()[None,:]]
+  polygon = array([protate**i for i in xrange(0,poly())]).view(Mobius)
+  link = (rotate[::-1]*polygon[1:-1,None]*rotate).reshape(-1,2,2)
+  if center() == 'vertex':
+    levels = [Mobius.identity()[None,:]]
+  elif center() == 'polygon':
+    levels = [polygon]
+  elif center() == 'edge':
+    levels = [array([Mobius.identity(),advance]).view(Mobius)]
+  else:
+    NotImplemented(center())
   for d in xrange(depth()):
-    next = (link[:,None]*levels[-1]).reshape(-1,2,2)
+    next = (levels[-1]*link[:,None]).reshape(-1,2,2)
     levels.append(next)
   trans = Mobius.concat(*levels)
   # Prune duplicates
