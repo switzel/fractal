@@ -206,6 +206,17 @@ def equilateral_length():
     raise NotImplemented(poly())
 
 @cache
+def barycenter_to_vertex():
+  t = 2*pi/degree()
+  if poly()==3:
+    return acosh(1/(sqrt(3)*tan(t/2)))
+  elif poly()==4:
+    # cos(t/2) = -cos(t)*cos(t/2)+sin(t)*sin(t/2)*cosh(side)
+    return acosh(1/tan(t/2))
+  else:
+    raise NotImplemented(poly())
+
+@cache
 def lattice():
   '''Compute lattice points and transforms of the standard 7-valent triangulation
   of the Poincare disk model of the hyperbolic plane.'''
@@ -218,9 +229,11 @@ def lattice():
   if center() == 'vertex':
     levels = [Mobius.identity()[None,:]]
   elif center() == 'polygon':
-    levels = [polygon]
+    move = Mobius.translation((barycenter_to_vertex(),0))*Mobius.from_angle(pi*(1 + 1/degree()))
+    levels = [move*polygon]
   elif center() == 'edge':
-    levels = [array([Mobius.identity(),advance]).view(Mobius)]
+    move = Mobius.translation((.5*equilateral_length(),0))*Mobius.from_angle(pi)
+    levels = [move*array([Mobius.identity(),advance]).view(Mobius)]
   else:
     NotImplemented(center())
   for d in xrange(depth()):
